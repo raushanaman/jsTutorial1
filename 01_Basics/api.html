@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Patient Checkup System</title>
+    <link rel="stylesheet" href="style.css"> <!-- Link to the new CSS file -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <style>
+        /* Styles for the map will go here (from style.css) */
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>City Hospital - Patient Checkup & Token System</h1>
+    </header>
+
+    <section class="container">
+        <div class="form-section">
+            <h2>Patient Registration</h2>
+            <form id="patient-form">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" required>
+
+                <label for="age">Age:</label>
+                <input type="number" id="age" required>
+
+                <label for="gender">Gender:</label>
+                <select id="gender">
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </select>
+
+                <label for="health-issues">Health Issues:</label>
+                <select id="health-issues" multiple>
+                    <option>Alzheimer's disease</option>
+                    <option>Obesity</option>
+                    <option>Diabetes</option>
+                    <option>Heart disease</option>
+                    <option>Cancer</option>
+                    <option>Cardiovascular</option>
+                    <option>Chronic kidney disease</option>
+                    <option>Gastroesophageal reflux disease</option>
+                    <option>Infertility</option>
+                    <option>Mental disorder</option>
+                    <option>Allergic rhinitis</option>
+                    <option>Back pain</option>
+                    <option>Fever</option>
+                    <option>Fibromyalgia</option>
+                    <option>Flu</option>
+                    <option>Headache</option>
+                    <option>Lupus</option>
+                    <option>Male breast cancer</option>
+                    <option>Respiratory disease</option>
+                    <option>Stroke</option>
+                    <option>Acne</option>
+                    <option>Asthma</option>
+                    <option>Carpal tunnel syndrome</option>
+                    <option>Finger injury</option>
+                </select>
+
+                <label for="checkup-type">Checkup Type:</label>
+                <select id="checkup-type">
+                    <option value="general">General Checkup - $50</option>
+                    <option value="injection">Injection - $15</option>
+                    <option value="medicine">Medicine Pickup - $20</option>
+                    <option value="specialist">Specialist Consultation - $100</option>
+                    <option value="hemogram">Hemogram - $40</option>
+                    <option value="cbc">Complete Blood Count (CBC) - $60</option>
+                    <option value="lipid-profile">Lipid Profile - $50</option>
+                    <option value="diabetes-panel">Diabetes Panel - $70</option>
+                    <option value="thyroid-panel">Thyroid Panel - $80</option>
+                    <option value="liver-panel">Liver Panel - $90</option>
+                    <option value="nutrients">Essential Nutrients - $30</option>
+                    <option value="electrolytes">Electrolytes Panel - $40</option>
+                    <option value="bmt">Bone Mineral Test (BMT) - $100</option>
+                    <option value="cancer-screening">Cancer Screening - $150</option>
+                </select>
+
+                <label for="emergency-contact">Emergency Contact:</label>
+                <input type="text" id="emergency-contact" required>
+
+                <label for="appointment-date">Appointment Date:</label>
+                <input type="date" id="appointment-date" required>
+
+                <button type="submit">Generate Token</button>
+            </form>
+        </div>
+
+        <div class="token-section">
+            <h2>Token Receipt</h2>      
+            <div id="token-display">No token generated yet.</div>
+            <canvas id="qr-code"></canvas> <!-- Initially hidden -->
+            
+            <p id="qr-hospital-name">QR Code for: City Hospital</p>
+        </div>
+    </section>
+
+    <section class="payment-section">
+        <h2>Payment & Billing</h2>
+        <p>Total Cost: <strong id="total-cost">$0</strong></p>
+        <button id="pay-now" disabled>Pay Now</button>
+        <div id="qrcode"></div>
+        <div class="instructions">
+            <p>Scan this QR code using any UPI app to make payment</p>
+        </div>
+    </section>
+
+    <!-- View on Map button -->
+    <section>
+        <button class="view-map-btn" id="view-map-btn">View on Map</button>
+        <div id="map"></div> <!-- Initially hidden -->
+    </section>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("patient-form");
+            const tokenDisplay = document.getElementById("token-display");
+            const qrCodeCanvas = document.getElementById("qr-code");
+            const totalCostDisplay = document.getElementById("total-cost");
+            const payButton = document.getElementById("pay-now");
+            const qrHospitalName = document.getElementById("qr-hospital-name");
+            const qrcodeDiv = document.getElementById("qrcode");
+
+            // Set up Leaflet map
+            const map = L.map('map').setView([28.7041, 77.1025], 13); // Latitude, Longitude of the hospital (example: New Delhi)
+
+            // Add OpenStreetMap layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Add a marker for the hospital
+            L.marker([28.7041, 77.1025]).addTo(map)
+                .bindPopup("<b>City Hospital</b><br>New Delhi")
+                .openPopup();
+
+            // Hide map initially
+            map.invalidateSize();
+            map.getContainer().style.display = "none";
+
+            // Show map when "View on Map" button is clicked
+            const viewMapButton = document.getElementById("view-map-btn");
+            viewMapButton.addEventListener("click", function () {
+                const mapContainer = document.getElementById("map");
+                mapContainer.style.display = "block";
+                map.invalidateSize(); // Ensures the map renders correctly after display
+            });
+
+            // Handle form submission
+            form.addEventListener('submit', function (event) {
+                event.preventDefault(); // Prevent default form submission
+
+                // Get form data
+                const patientName = document.getElementById("patient-name").value;
+                const patientAge = document.getElementById("patient-age").value;
+                const patientGender = document.getElementById("patient-gender").value;
+                const patientPhone = document.getElementById("patient-phone").value;
+                const visitReason = document.getElementById("visit-reason").value;
+
+                // Generate token (simulated)
+                const tokenNumber = Math.floor(Math.random() * 10000);
+                tokenDisplay.innerHTML = `Your token number is: <strong>#${tokenNumber}</strong>`;
+
+                // Enable the "Pay Now" button and update total cost (simulated)
+                totalCostDisplay.innerHTML = "$50"; // Example cost
+                payButton.disabled = false;
+
+                // Generate QR Code for payment
+                const qr = new QRCode(qrcodeDiv, {
+                    text: `upi://pay?pa=cityhospital@upi&pn=City+Hospital&mc=123456&tid=${tokenNumber}&am=50&cu=INR`,
+                    width: 128,
+                    height: 128
+                });
+
+                // You can add other actions here, such as saving the patient data, etc.
+            });
+        });
+    </script>
+
+</body>
+</html>
