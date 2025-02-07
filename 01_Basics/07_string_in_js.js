@@ -9,6 +9,8 @@ console.log(name.charAt(2));
 console.log(name.indexOf('R'));
 console.log(name.toLowerCase());
 console.log(name.toUpperCase())
+console.log(name.slice());
+
 
 const subString = name.substring(1,6)//it exclude the character present at 6th index
 console.log(subString);
