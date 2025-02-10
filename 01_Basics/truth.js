@@ -28,8 +28,8 @@ if (Object.keys(emptyObj).length===0){
 
 let val1;
 //val1 = 5 ?? 10
-//val1 = null ?? 10 // here 10 is assign to val1
-val1 = undefined ?? 10
+val1 = null ?? 10 // here 10 is assign to val1
+//val1 = undefined ?? 10
 
 console.log(val1);
 
