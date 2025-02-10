@@ -56,3 +56,4 @@ if(loggedInWithEmail || loggedInWithGoogle)
     console.log("allow to signIn");
     
 }
+
